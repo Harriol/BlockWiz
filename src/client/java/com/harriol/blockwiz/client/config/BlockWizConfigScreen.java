@@ -1,11 +1,11 @@
 package com.harriol.blockwiz.client.config;
 
 import com.harriol.blockwiz.common.config.ConfigData;
+import com.harriol.blockwiz.common.config.ConfigDropdownValues;
 import com.harriol.blockwiz.common.config.ConfigHolder;
 import com.harriol.blockwiz.common.config.ConfigIO;
 import com.harriol.blockwiz.common.config.ConfigValidator;
 import com.harriol.blockwiz.common.config.PresetLibrary;
-import com.harriol.blockwiz.common.config.PresetTemplate;
 import com.harriol.blockwiz.common.i18n.I18n;
 import com.harriol.blockwiz.common.i18n.Keys;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
@@ -35,9 +35,6 @@ public final class BlockWizConfigScreen {
 
     /** 最大输出未设置标记（配置页用 -1 表示 null）。 */
     private static final int MAX_TOKENS_UNSET = -1;
-
-    /** 预设下拉的"不使用"选项 id。 */
-    private static final String NO_PRESET = "none";
 
     /** API Key 掩码展示占位。 */
     private static final String API_KEY_MASK = "••••••••";
@@ -112,9 +109,10 @@ public final class BlockWizConfigScreen {
                 .startStrField(literal(Keys.EXTRA_HEADERS), serializeHeaders(state.working.getExtraHeaders()))
                 .build();
         state.preset = entryBuilder
-                .startDropdownMenu(literal(Keys.PRESET_SECTION), NO_PRESET,
-                        code -> code, code -> literal(presetLabel(code)))
-                .setSelections(presetOptions())
+                .startDropdownMenu(literal(Keys.PRESET_SECTION), ConfigDropdownValues.NO_PRESET,
+                        ConfigDropdownValues::resolvePreset,
+                        code -> Component.literal(ConfigDropdownValues.presetLabel(code)))
+                .setSelections(ConfigDropdownValues.presetOptions())
                 .build();
     }
 
@@ -169,8 +167,9 @@ public final class BlockWizConfigScreen {
                 .build();
         state.language = entryBuilder
                 .startDropdownMenu(literal(Keys.LANGUAGE), state.working.getLanguage(),
-                        code -> code, code -> literal(languageLabel(code)))
-                .setSelections(List.of(ConfigData.DEFAULT_LANGUAGE_ZH_CN, ConfigData.DEFAULT_LANGUAGE_EN_US))
+                        ConfigDropdownValues::resolveLanguage,
+                        code -> Component.literal(ConfigDropdownValues.languageLabel(code)))
+                .setSelections(ConfigDropdownValues.languageOptions())
                 .build();
     }
 
@@ -272,7 +271,7 @@ public final class BlockWizConfigScreen {
      */
     private static void applyPreset(ScreenState state, ConfigData next) {
         String selectedPreset = state.preset.getValue();
-        if (selectedPreset != null && !NO_PRESET.equals(selectedPreset)) {
+        if (selectedPreset != null && !ConfigDropdownValues.NO_PRESET.equals(selectedPreset)) {
             PresetLibrary.byId(selectedPreset).ifPresent(preset -> preset.applyTo(next));
         }
     }
@@ -356,51 +355,6 @@ public final class BlockWizConfigScreen {
             }
         }
         return result;
-    }
-
-    /**
-     * 语言代码的本地化标签。
-     *
-     * @param code 语言代码
-     * @return 本地化标签
-     */
-    private static String languageLabel(String code) {
-        if (ConfigData.DEFAULT_LANGUAGE_ZH_CN.equals(code)) {
-            return I18n.get(Keys.LANGUAGE_ZH_CN);
-        }
-        if (ConfigData.DEFAULT_LANGUAGE_EN_US.equals(code)) {
-            return I18n.get(Keys.LANGUAGE_EN_US);
-        }
-        return code;
-    }
-
-    /**
-     * 预设 id 的本地化标签。
-     *
-     * @param presetId 预设 id
-     * @return 本地化标签
-     */
-    private static String presetLabel(String presetId) {
-        if (NO_PRESET.equals(presetId)) {
-            return I18n.get(Keys.PRESET_NONE);
-        }
-        return PresetLibrary.byId(presetId)
-                .map(preset -> I18n.get(preset.displayNameKey()))
-                .orElse(presetId);
-    }
-
-    /**
-     * 预设下拉可选值：none + 五类预设。
-     *
-     * @return 预设 id 列表
-     */
-    private static List<String> presetOptions() {
-        List<String> options = new ArrayList<>();
-        options.add(NO_PRESET);
-        for (PresetTemplate preset : PresetLibrary.ALL) {
-            options.add(preset.id());
-        }
-        return options;
     }
 
     /**
