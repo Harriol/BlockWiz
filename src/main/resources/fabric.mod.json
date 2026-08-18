@@ -3,14 +3,10 @@
 	"id": "blockwiz",
 	"version": "${version}",
 	"name": "BlockWiz",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "方块巫师：本地 AI 建造与拆除助手（Minecraft 1.21.11 Fabric，单人/局域网）。",
 	"authors": [
-		"Me!"
+		"Harriol"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
 	"license": "CC0-1.0",
 	"icon": "assets/blockwiz/icon.png",
 	"environment": "*",
@@ -20,6 +16,9 @@
 		],
 		"client": [
 			"com.harriol.blockwiz.client.BlockWizClient"
+		],
+		"modmenu": [
+			"com.harriol.blockwiz.client.config.BlockWizModMenu"
 		]
 	},
 	"mixins": [
@@ -33,6 +32,9 @@
 		"fabricloader": ">=0.19.3",
 		"minecraft": "~1.21.11",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"modmenu": "*",
+		"cloth-config": "*",
+		"placeholder-api": "*"
 	}
 }
