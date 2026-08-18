@@ -33,8 +33,9 @@ public final class BlockWizCommand {
                                          net.minecraft.commands.CommandBuildContext context,
                                          net.minecraft.commands.Commands.CommandSelection environment) {
         dispatcher.register(Commands.literal("blockwiz")
-                /* V1.0 仅支持单人/局域网（集成服务器）；专用服务器直接禁用。 */
-                .requires(source -> !source.getServer().isDedicatedServer())
+                /* V1.0 仅支持单人/局域网（集成服务器）；专用服务器直接禁用。
+                   requires 谓词会在命令树序列化时被调用（此时 getServer() 可能为 null），必须 null 安全。 */
+                .requires(source -> source.getServer() == null || !source.getServer().isDedicatedServer())
                 .then(Commands.literal("test").executes(ctx -> runTest(ctx.getSource())))
                 .then(Commands.literal("confirm").executes(ctx -> placeholder(ctx.getSource(), "Sprint 3")))
                 .then(Commands.literal("cancel").executes(ctx -> placeholder(ctx.getSource(), "Sprint 2")))
