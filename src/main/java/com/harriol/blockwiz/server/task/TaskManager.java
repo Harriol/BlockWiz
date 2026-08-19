@@ -54,6 +54,12 @@ public final class TaskManager {
     private static volatile ServerPlayer operator;
     private static volatile boolean proposalRequested;
 
+    /** 距扫描结束少于该 tick 数时不再播报进度（避免长扫描收尾时刷屏）。 */
+    private static final long PROGRESS_MIN_REMAINING_TICKS = 60;
+
+    /** 已播报的最大 25% 档位（0=未播报，1=25%，2=50%，3=75%）。 */
+    private static volatile int lastProgressQuarter;
+
     private TaskManager() {
     }
 
@@ -72,6 +78,8 @@ public final class TaskManager {
                     resetTaskState();
                 }
                 activeScan = null;
+            } else {
+                reportScanProgress();
             }
         }
         if (current != null && current.state() == TaskState.PLANNING
@@ -304,6 +312,7 @@ public final class TaskManager {
         lastScanSummary = null;
         pendingProposal = null;
         proposalRequested = false;
+        lastProgressQuarter = 0;
         PROPOSAL_RESULTS.clear();
         current = task.withDescription(description);
         String facing = Direction.fromYRot(player.getYRot()).name();
@@ -312,6 +321,32 @@ public final class TaskManager {
         Feedback.sendKey(source, Keys.COMMAND_RANGE_TAKEOVER, task.range(), description);
         Feedback.sendKey(source, Keys.COMMAND_SCAN_START_RANGE, task.range());
         return true;
+    }
+
+    /**
+     * 长扫描进度播报：每越过一个 25% 档位发一条进度（含预计剩余秒数）；
+     * 距结束不足 {@value #PROGRESS_MIN_REMAINING_TICKS} tick 或短扫描（几秒内完成）不打扰。
+     */
+    private static void reportScanProgress() {
+        if (activeScan == null) {
+            return;
+        }
+        long total = activeScan.total();
+        long cursor = activeScan.scanned();
+        if (total <= 0) {
+            return;
+        }
+        long remainingTicks = Math.max(0, (total - cursor) / WorldScanner.SLICE_SIZE);
+        if (remainingTicks < PROGRESS_MIN_REMAINING_TICKS) {
+            return;
+        }
+        int percent = (int) (cursor * 100 / total);
+        int quarter = percent / 25;
+        if (quarter > lastProgressQuarter) {
+            lastProgressQuarter = quarter;
+            long etaSec = Math.max(1, remainingTicks / 20L);
+            Feedback.sendKey(operatorSource(), Keys.COMMAND_SCAN_PROGRESS, percent, etaSec);
+        }
     }
 
     private static void onScanComplete(ScanSummary summary) {
@@ -433,6 +468,7 @@ public final class TaskManager {
         pendingProposal = null;
         taskConfig = null;
         proposalRequested = false;
+        lastProgressQuarter = 0;
         PROPOSAL_RESULTS.clear();
     }
 

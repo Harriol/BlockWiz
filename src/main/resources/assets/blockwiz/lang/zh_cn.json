@@ -81,6 +81,7 @@
   "command.taskActive": "已有活动任务（状态：{0}），请先 /blockwiz cancel 取消或 /blockwiz pause 暂停",
   "command.scan.start": "开始环境扫描（半径 {0}）……",
   "command.scan.start.range": "开始环境扫描（范围 {0}）……",
+  "command.scan.progress": "环境扫描进行中：已完成 {0}%，预计还需约 {1} 秒……",
   "command.scan.done": "扫描完成：非空方块 {0} 个，范围 {1}",
   "command.scan.unloaded": "扫描区域包含未加载区块，任务已停止：请靠近目标或调整范围",
   "command.propose.start": "正在请求 AI 提出候选边界……",

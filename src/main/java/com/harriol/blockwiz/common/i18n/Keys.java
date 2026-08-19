@@ -245,6 +245,9 @@ public final class Keys {
     /** 扫描开始（手动范围模式）。 */
     public static final String COMMAND_SCAN_START_RANGE = "command.scan.start.range";
 
+    /** 扫描进度播报（{0}=百分比，{1}=预计剩余秒数）。 */
+    public static final String COMMAND_SCAN_PROGRESS = "command.scan.progress";
+
     /** 扫描完成摘要。 */
     public static final String COMMAND_SCAN_DONE = "command.scan.done";
 

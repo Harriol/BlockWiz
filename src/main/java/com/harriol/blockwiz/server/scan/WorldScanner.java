@@ -21,8 +21,12 @@ import java.util.function.Consumer;
  */
 public final class WorldScanner {
 
-    /** 每 tick 扫描的位置上限。 */
-    public static final int SLICE_SIZE = 1024;
+    /**
+     * 每 tick 扫描的位置上限。
+     * 1024/tick 时半径 64（129³ ≈ 215 万格）需约 105 秒，过长；4096/tick 下约 26 秒，
+     * getBlockState 为主线程毫秒级开销，仍不影响 TPS。
+     */
+    public static final int SLICE_SIZE = 4096;
 
     /** 未加载区块错误（i18n 键）。 */
     public static final String ERROR_UNLOADED = "command.scan.unloaded";
@@ -177,6 +181,11 @@ public final class WorldScanner {
         /** 待扫描位置总数。 */
         public long total() {
             return total;
+        }
+
+        /** 已扫描位置数（进度反馈用）。 */
+        public long scanned() {
+            return cursor;
         }
 
         /** 注册完成回调（在 tick() 内部同步调用）。 */
