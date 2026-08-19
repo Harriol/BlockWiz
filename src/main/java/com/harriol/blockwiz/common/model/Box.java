@@ -81,7 +81,21 @@ public record Box(Pos min, Pos max) {
      * @return 合法返回 true
      */
     public boolean isWithinLimits() {
-        return edgeX() <= MAX_EDGE && edgeY() <= MAX_EDGE && edgeZ() <= MAX_EDGE
+        return isWithinLimits(MAX_EDGE);
+    }
+
+    /**
+     * 是否满足范围上限：任一边长 ≤maxEdge 且体积 ≤262144。
+     * 玩家配置的扫描半径小于 64 时，maxEdge 取 min(64, scanRadius)，限制随玩家设定收紧。
+     *
+     * @param maxEdge 单边上限（≥1）
+     * @return 合法返回 true
+     */
+    public boolean isWithinLimits(int maxEdge) {
+        if (maxEdge < 1) {
+            throw new IllegalArgumentException("maxEdge 必须 ≥1");
+        }
+        return edgeX() <= maxEdge && edgeY() <= maxEdge && edgeZ() <= maxEdge
                 && volume() <= MAX_VOLUME;
     }
 

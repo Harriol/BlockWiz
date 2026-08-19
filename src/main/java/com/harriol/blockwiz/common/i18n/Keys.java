@@ -170,6 +170,9 @@ public final class Keys {
     /** 连接测试进行中提示。 */
     public static final String COMMAND_TEST_RUNNING = "command.test.running";
 
+    /** 连接测试未配置 API Key。 */
+    public static final String COMMAND_TEST_NO_API_KEY = "command.test.noApiKey";
+
     /** 连接测试成功结果。 */
     public static final String COMMAND_TEST_OK = "command.test.ok";
 
@@ -215,8 +218,14 @@ public final class Keys {
     /** 手动范围不合法。 */
     public static final String COMMAND_RANGE_INVALID = "command.range.invalid";
 
-    /** 范围上限说明。 */
+    /** 范围上限说明（带 {0}=实际边长上限）。 */
     public static final String COMMAND_RANGE_LIMIT = "command.range.limit";
+
+    /** 范围上限简释（用于 AI 候选超限回退提示）。 */
+    public static final String COMMAND_RANGE_LIMIT_HINT = "command.range.limit.hint";
+
+    /** 描述任务接管手动范围成功。 */
+    public static final String COMMAND_RANGE_TAKEOVER = "command.range.takeover";
 
     /** 范围含未加载区块。 */
     public static final String COMMAND_RANGE_UNLOADED = "command.range.unloaded";

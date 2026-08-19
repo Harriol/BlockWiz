@@ -88,6 +88,9 @@ public final class TaskManager {
         if (!guardHost(source)) {
             return;
         }
+        if (tryTakeOverRangeSkeleton(source, description)) {
+            return;
+        }
         if (!ensureNoActiveTask(source)) {
             return;
         }
@@ -252,9 +255,11 @@ public final class TaskManager {
     }
 
     private static void setManualRange(CommandSourceStack source, Box box) {
-        if (!box.isWithinLimits()) {
+        // 范围上限随玩家配置收紧：min(64, scanRadius)；64 为 PRD 硬上限
+        int maxEdge = Math.min(Box.MAX_EDGE, ConfigHolder.get().getScanRadius());
+        if (!box.isWithinLimits(maxEdge)) {
             Feedback.sendKey(source, Keys.COMMAND_RANGE_INVALID, box);
-            Feedback.sendKey(source, Keys.COMMAND_RANGE_LIMIT);
+            Feedback.sendKey(source, Keys.COMMAND_RANGE_LIMIT, maxEdge);
             return;
         }
         if (!ensureNoActiveTask(source)) {
@@ -265,10 +270,27 @@ public final class TaskManager {
             return;
         }
         resetTaskState();
-        current = new TaskSnapshot(UUID.randomUUID().toString(), "手动指定范围",
+        current = new TaskSnapshot(UUID.randomUUID().toString(), TaskSnapshot.RANGE_SKELETON_DESCRIPTION,
                 TaskState.PLANNING, box, null, null, System.currentTimeMillis());
         Feedback.sendKey(source, Keys.COMMAND_RANGE_SET, box);
         Feedback.sendKey(source, Keys.COMMAND_PLANNING_STUB);
+    }
+
+    /**
+     * 接管"范围骨架任务"：玩家先 /blockwiz range 设定范围，再输入自然语言描述时，
+     * 复用已设定范围继续任务，而不是被单任务约束拒绝（PRD §5.2 玩家指定范围模式）。
+     *
+     * @return 是否已接管（true 表示不再走单任务检查/扫描流程）
+     */
+    private static boolean tryTakeOverRangeSkeleton(CommandSourceStack source, String description) {
+        TaskSnapshot task = current;
+        if (task == null || !task.isRangeSkeleton()) {
+            return false;
+        }
+        current = task.withDescription(description);
+        Feedback.sendKey(source, Keys.COMMAND_RANGE_TAKEOVER, task.range(), description);
+        Feedback.sendKey(source, Keys.COMMAND_PLANNING_STUB);
+        return true;
     }
 
     private static void onScanComplete(ScanSummary summary) {
@@ -309,10 +331,15 @@ public final class TaskManager {
         }
         proposalRequested = false;
         BoundaryProposal proposal;
-        if (result.ok()) {
+        if (result.ok() && isWithinScanLimits(result.proposal().range())) {
             proposal = result.proposal();
         } else {
-            Feedback.sendKey(operatorSource(), Keys.COMMAND_PROPOSE_FAIL, I18n.get(result.errorKey()));
+            if (result.ok()) {
+                // AI 提议超出玩家配置的扫描半径：视为不可用，回退启发式（启发式天然在扫描范围内）
+                Feedback.sendKey(operatorSource(), Keys.COMMAND_PROPOSE_FAIL, I18n.get(Keys.COMMAND_RANGE_LIMIT_HINT));
+            } else {
+                Feedback.sendKey(operatorSource(), Keys.COMMAND_PROPOSE_FAIL, I18n.get(result.errorKey()));
+            }
             proposal = HeuristicBoundaryProposer.propose(lastScanSummary);
         }
         pendingProposal = proposal;
@@ -339,6 +366,12 @@ public final class TaskManager {
         }
         return proposal.reasoning() == null || proposal.reasoning().isBlank()
                 ? "-" : proposal.reasoning();
+    }
+
+    /** 范围是否落在玩家配置的扫描能力内：边长 ≤ min(64, scanRadius)。 */
+    private static boolean isWithinScanLimits(Box range) {
+        int maxEdge = Math.min(Box.MAX_EDGE, taskConfig.getScanRadius());
+        return range.isWithinLimits(maxEdge);
     }
 
     /** 8 个角点 + 中心点落在已加载区块内才算可执行（PRD §5.2）。 */
