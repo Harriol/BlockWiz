@@ -203,6 +203,126 @@ public final class Keys {
     /** 取消词。 */
     public static final String CANCEL_WORD = "cancelWord";
 
+    /** range 命令用法。 */
+    public static final String COMMAND_RANGE_HELP = "command.range.help";
+
+    /** 手动范围已记录。 */
+    public static final String COMMAND_RANGE_SET = "command.range.set";
+
+    /** 手动范围不合法。 */
+    public static final String COMMAND_RANGE_INVALID = "command.range.invalid";
+
+    /** 范围上限说明。 */
+    public static final String COMMAND_RANGE_LIMIT = "command.range.limit";
+
+    /** 范围含未加载区块。 */
+    public static final String COMMAND_RANGE_UNLOADED = "command.range.unloaded";
+
+    /** 仅主机玩家可操作。 */
+    public static final String COMMAND_HOST_ONLY = "command.hostOnly";
+
+    /** 当前没有任务。 */
+    public static final String COMMAND_NO_TASK = "command.noTask";
+
+    /** 已有活动任务。 */
+    public static final String COMMAND_TASK_ACTIVE = "command.taskActive";
+
+    /** 扫描开始。 */
+    public static final String COMMAND_SCAN_START = "command.scan.start";
+
+    /** 扫描完成摘要。 */
+    public static final String COMMAND_SCAN_DONE = "command.scan.done";
+
+    /** 扫描区域含未加载区块。 */
+    public static final String COMMAND_SCAN_UNLOADED = "command.scan.unloaded";
+
+    /** 请求 AI 候选边界。 */
+    public static final String COMMAND_PROPOSE_START = "command.propose.start";
+
+    /** AI 候选边界请求/解析失败。 */
+    public static final String COMMAND_PROPOSE_FAIL = "command.propose.fail";
+
+    /** 候选边界展示。 */
+    public static final String COMMAND_CANDIDATE_SHOW = "command.candidate.show";
+
+    /** 启发式候选边界理由。 */
+    public static final String COMMAND_CANDIDATE_HEURISTIC_REASON = "command.candidate.heuristic.reason";
+
+    /** 确认成功。 */
+    public static final String COMMAND_CONFIRM_OK = "command.confirm.ok";
+
+    /** 当前没有待确认项。 */
+    public static final String COMMAND_CONFIRM_NONE = "command.confirm.none";
+
+    /** 取消成功。 */
+    public static final String COMMAND_CANCEL_OK = "command.cancel.ok";
+
+    /** 暂停成功。 */
+    public static final String COMMAND_PAUSE_OK = "command.pause.ok";
+
+    /** 当前状态不可暂停。 */
+    public static final String COMMAND_PAUSE_INVALID = "command.pause.invalid";
+
+    /** 恢复成功。 */
+    public static final String COMMAND_RESUME_OK = "command.resume.ok";
+
+    /** 当前状态不可恢复。 */
+    public static final String COMMAND_RESUME_INVALID = "command.resume.invalid";
+
+    /** 状态：标题。 */
+    public static final String COMMAND_STATUS_HEADER = "command.status.header";
+
+    /** 状态：任务状态。 */
+    public static final String COMMAND_STATUS_STATE = "command.status.state";
+
+    /** 状态：描述。 */
+    public static final String COMMAND_STATUS_DESCRIPTION = "command.status.description";
+
+    /** 状态：范围。 */
+    public static final String COMMAND_STATUS_RANGE = "command.status.range";
+
+    /** 状态：范围未指定。 */
+    public static final String COMMAND_STATUS_RANGE_NONE = "command.status.range.none";
+
+    /** 状态：待确认项。 */
+    public static final String COMMAND_STATUS_PENDING = "command.status.pending";
+
+    /** 状态：无待确认项。 */
+    public static final String COMMAND_STATUS_PENDING_NONE = "command.status.pending.none";
+
+    /** 状态：无任务。 */
+    public static final String COMMAND_STATUS_NONE = "command.status.none";
+
+    /** 状态：任务记录功能待 Sprint 6。 */
+    public static final String COMMAND_STATUS_RECORDS_PENDING = "command.status.records.pending";
+
+    /** 规划中占位提示（Sprint 3 交付方案规划）。 */
+    public static final String COMMAND_PLANNING_STUB = "command.planning.stub";
+
+    /** 确认类型：范围。 */
+    public static final String CONFIRM_TYPE_RANGE = "confirm.type.range";
+
+    /** 候选边界来源：AI。 */
+    public static final String ORIGIN_AI = "origin.ai";
+
+    /** 候选边界来源：启发式。 */
+    public static final String ORIGIN_HEURISTIC = "origin.heuristic";
+
+    /** 候选边界来源：玩家。 */
+    public static final String ORIGIN_PLAYER = "origin.player";
+
+    /** AI 边界错误：非 JSON。 */
+    public static final String AI_BOUNDARY_ERROR_JSON = "ai.boundary.error.json";
+
+    /** AI 边界错误：range 缺失。 */
+    public static final String AI_BOUNDARY_ERROR_MISSING_RANGE = "ai.boundary.error.missingRange";
+
+    /** AI 边界错误：坐标非法。 */
+    public static final String AI_BOUNDARY_ERROR_INVALID_RANGE = "ai.boundary.error.invalidRange";
+
+    /** AI 边界错误：超限。 */
+    public static final String AI_BOUNDARY_ERROR_LIMITS = "ai.boundary.error.limits";
+
     /** 校验器可能返回的全部错误键，供测试断言语言文件完整。 */
     public static final Set<String> ERROR_KEYS = Set.of(
             ERROR_BASE_URL_EMPTY, ERROR_BASE_URL_INVALID, ERROR_PATH_INVALID,

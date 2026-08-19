@@ -4,7 +4,9 @@ import com.harriol.blockwiz.common.config.ConfigData;
 import com.harriol.blockwiz.common.config.ConfigHolder;
 import com.harriol.blockwiz.common.config.ConfigIO;
 import com.harriol.blockwiz.server.command.BlockWizCommand;
+import com.harriol.blockwiz.server.task.TaskManager;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -25,6 +27,8 @@ public class BlockWiz implements ModInitializer {
 	public void onInitialize() {
 		loadConfig();
 		BlockWizCommand.register();
+		// 任务扫描分片与 AI 结果消费（全部在主线程执行，不阻塞 HTTP）
+		ServerTickEvents.END_SERVER_TICK.register(server -> TaskManager.tick());
 		LOGGER.info("BlockWiz 已加载，AI 请求状态：{}", ConfigHolder.isValid() ? "已启用" : "未配置（禁用）");
 	}
 

@@ -16,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -63,7 +64,7 @@ public final class AiClient {
 
     public CompletableFuture<ConnectionTestResult> testConnectionAsync(ConfigData config) {
         Objects.requireNonNull(config, "config");
-        HttpRequest request = buildRequest(config);
+        HttpRequest request = buildRequest(config, buildTestBody(config));
         long startNanos = System.nanoTime();
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .handle((response, error) -> {
@@ -72,6 +73,30 @@ public final class AiClient {
                             ? classifyFailure(error, durationMs)
                             : classifyResponse(response, durationMs);
                     LOGGER.info("Connection test finished: ok={} status={} durationMs={} category={}",
+                            result.ok(), result.statusCode(), result.durationMs(), result.categoryKey());
+                    return result;
+                });
+    }
+
+    /**
+     * 通用聊天请求（候选边界等 AI 调用）。响应中的 content 原样返回，由调用方解析。
+     *
+     * @param config   配置快照
+     * @param messages OpenAI 兼容消息列表（role/content）
+     * @return 未来结果
+     */
+    public CompletableFuture<AiChatResult> chatAsync(ConfigData config, List<JsonObject> messages) {
+        Objects.requireNonNull(config, "config");
+        Objects.requireNonNull(messages, "messages");
+        HttpRequest request = buildRequest(config, buildMessagesBody(config, messages));
+        long startNanos = System.nanoTime();
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .handle((response, error) -> {
+                    long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+                    AiChatResult result = error != null
+                            ? classifyChatFailure(error, durationMs)
+                            : classifyChatResponse(response, durationMs);
+                    LOGGER.info("Chat request finished: ok={} status={} durationMs={} category={}",
                             result.ok(), result.statusCode(), result.durationMs(), result.categoryKey());
                     return result;
                 });
@@ -92,12 +117,12 @@ public final class AiClient {
         return base + suffix;
     }
 
-    private HttpRequest buildRequest(ConfigData config) {
+    private HttpRequest buildRequest(ConfigData config, String body) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(buildEndpoint(config.getApiBaseUrl(), config.getChatCompletionsPath())))
                 .timeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                 .header("Content-Type", CONTENT_TYPE)
-                .POST(HttpRequest.BodyPublishers.ofString(buildBody(config)));
+                .POST(HttpRequest.BodyPublishers.ofString(body));
 
         for (Map.Entry<String, String> entry : config.getExtraHeaders().entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank()
@@ -112,7 +137,7 @@ public final class AiClient {
         return builder.build();
     }
 
-    private static String buildBody(ConfigData config) {
+    private static String buildTestBody(ConfigData config) {
         JsonObject body = new JsonObject();
         body.addProperty("model", config.getModel());
         body.addProperty("temperature", config.getTemperature());
@@ -128,6 +153,21 @@ public final class AiClient {
         return body.toString();
     }
 
+    private static String buildMessagesBody(ConfigData config, List<JsonObject> messages) {
+        JsonObject body = new JsonObject();
+        body.addProperty("model", config.getModel());
+        body.addProperty("temperature", config.getTemperature());
+        if (config.getMaxTokens() != null) {
+            body.addProperty("max_tokens", config.getMaxTokens());
+        }
+        JsonArray messageArray = new JsonArray();
+        for (JsonObject message : messages) {
+            messageArray.add(message);
+        }
+        body.add("messages", messageArray);
+        return body.toString();
+    }
+
     private ConnectionTestResult classifyResponse(HttpResponse<String> response, long durationMs) {
         int status = response.statusCode();
         if (status >= HTTP_OK_MIN && status <= HTTP_OK_MAX) {
@@ -136,24 +176,36 @@ public final class AiClient {
             }
             return ConnectionTestResult.failure(Keys.TEST_CATEGORY_FORMAT, status, durationMs, "choices[0].message.content 缺失");
         }
-        String category;
-        if (status == HTTP_UNAUTHORIZED || status == HTTP_FORBIDDEN) {
-            category = Keys.TEST_CATEGORY_AUTH;
-        } else if (status == HTTP_TOO_MANY_REQUESTS) {
-            category = Keys.TEST_CATEGORY_RATE_LIMIT;
-        } else if (status >= HTTP_SERVER_ERROR_MIN) {
-            category = Keys.TEST_CATEGORY_SERVER;
-        } else {
-            category = Keys.TEST_CATEGORY_HTTP;
+        return ConnectionTestResult.failure(categoryForStatus(status), status, durationMs, "HTTP " + status);
+    }
+
+    private AiChatResult classifyChatResponse(HttpResponse<String> response, long durationMs) {
+        int status = response.statusCode();
+        if (status >= HTTP_OK_MIN && status <= HTTP_OK_MAX) {
+            String content = extractContent(response.body());
+            if (content != null) {
+                return AiChatResult.success(content, status, durationMs);
+            }
+            return AiChatResult.failure(Keys.TEST_CATEGORY_FORMAT, status, durationMs);
         }
-        return ConnectionTestResult.failure(category, status, durationMs, "HTTP " + status);
+        return AiChatResult.failure(categoryForStatus(status), status, durationMs);
+    }
+
+    private static String categoryForStatus(int status) {
+        if (status == HTTP_UNAUTHORIZED || status == HTTP_FORBIDDEN) {
+            return Keys.TEST_CATEGORY_AUTH;
+        }
+        if (status == HTTP_TOO_MANY_REQUESTS) {
+            return Keys.TEST_CATEGORY_RATE_LIMIT;
+        }
+        if (status >= HTTP_SERVER_ERROR_MIN) {
+            return Keys.TEST_CATEGORY_SERVER;
+        }
+        return Keys.TEST_CATEGORY_HTTP;
     }
 
     private ConnectionTestResult classifyFailure(Throwable error, long durationMs) {
-        Throwable cause = error;
-        while (cause instanceof CompletionException && cause.getCause() != null) {
-            cause = cause.getCause();
-        }
+        Throwable cause = unwrap(error);
         String category = Keys.TEST_CATEGORY_NETWORK;
         if (cause instanceof HttpTimeoutException) {
             category = Keys.TEST_CATEGORY_TIMEOUT;
@@ -163,23 +215,54 @@ public final class AiClient {
         return ConnectionTestResult.failure(category, -1, durationMs, cause.getClass().getSimpleName());
     }
 
+    private AiChatResult classifyChatFailure(Throwable error, long durationMs) {
+        Throwable cause = unwrap(error);
+        String category = Keys.TEST_CATEGORY_NETWORK;
+        if (cause instanceof HttpTimeoutException) {
+            category = Keys.TEST_CATEGORY_TIMEOUT;
+        } else if (cause instanceof IOException) {
+            category = Keys.TEST_CATEGORY_NETWORK;
+        }
+        return AiChatResult.failure(category, -1, durationMs);
+    }
+
+    private static Throwable unwrap(Throwable error) {
+        Throwable cause = error;
+        while (cause instanceof CompletionException && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
+
     private static boolean isValidChatResponse(String body) {
+        return extractContent(body) != null;
+    }
+
+    /** 提取 choices[0].message.content；缺失或类型不符返回 null。 */
+    static String extractContent(String body) {
         if (body == null || body.isBlank()) {
-            return false;
+            return null;
         }
         try {
             JsonElement root = JsonParser.parseString(body);
             if (!root.isJsonObject()) {
-                return false;
+                return null;
             }
             JsonArray choices = root.getAsJsonObject().getAsJsonArray("choices");
             if (choices == null || choices.isEmpty()) {
-                return false;
+                return null;
             }
-            JsonObject message = choices.get(0).getAsJsonObject().getAsJsonObject("message");
-            return message != null && message.get("content").isJsonPrimitive();
+            JsonElement message = choices.get(0).getAsJsonObject().get("message");
+            if (message == null || !message.isJsonObject()) {
+                return null;
+            }
+            JsonElement content = message.getAsJsonObject().get("content");
+            if (content != null && content.isJsonPrimitive() && content.getAsJsonPrimitive().isString()) {
+                return content.getAsString();
+            }
+            return null;
         } catch (RuntimeException e) {
-            return false;
+            return null;
         }
     }
 }
