@@ -13,6 +13,7 @@
     ?status=500   服务端错误
     ?badjson=1    返回非 JSON
     ?timeout=10   挂起 10 秒（配合配置里的请求超时 < 10 秒可复现超时）
+    ?boundary=1   AI 候选边界请求返回合法候选（验证 /blockwiz confirm 流程）
 """
 import argparse
 import json
@@ -37,6 +38,15 @@ class MockOpenAiHandler(BaseHTTPRequestHandler):
             body = json.dumps({"error": {"message": "mock failure", "type": "mock_error"}}).encode("utf-8")
         elif "badjson" in query:
             body = b"this is not json at all"
+        elif "boundary" in query:
+            # Sprint 2：AI 候选边界最小 JSON（以玩家为中心 11x9x11）
+            content = json.dumps({
+                "range": {"min": {"x": -5, "y": -4, "z": -5}, "max": {"x": 5, "y": 4, "z": 5}},
+                "origin": "AI_PROPOSED",
+                "reasoning": "mock: 以玩家为中心 11x9x11 的候选",
+                "keep": ["树"]
+            })
+            body = json.dumps({"choices": [{"message": {"content": content}}]}).encode("utf-8")
         else:
             body = json.dumps({"choices": [{"message": {"content": "pong"}}]}).encode("utf-8")
 
