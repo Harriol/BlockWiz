@@ -1,5 +1,6 @@
 package com.harriol.blockwiz.server.command;
 
+import com.harriol.blockwiz.common.config.ApiUrlPolicy;
 import com.harriol.blockwiz.common.config.ConfigData;
 import com.harriol.blockwiz.common.config.ConfigHolder;
 import com.harriol.blockwiz.common.i18n.I18n;
@@ -90,8 +91,10 @@ public final class BlockWizCommand {
             send(source, I18n.get(Keys.COMMAND_TEST_NOT_CONFIGURED));
             return 1;
         }
-        // 没有 API Key 就谈不上"连上大模型"（PRD §5.1 apiKey 原为可选，产品确认后收紧为必测前置条件）
-        if (config.getApiKey() == null || config.getApiKey().isBlank()) {
+        // 本地免鉴权服务（Ollama 等 http://127.0.0.1|localhost）可空 Key；
+        // 外部大模型必须配置 API Key，否则谈不上"连上大模型"
+        if ((config.getApiKey() == null || config.getApiKey().isBlank())
+                && !ApiUrlPolicy.isLocalService(config.getApiBaseUrl())) {
             Feedback.sendKey(source, Keys.COMMAND_TEST_NO_API_KEY);
             return 1;
         }

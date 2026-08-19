@@ -1,9 +1,7 @@
 package com.harriol.blockwiz.common.config;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,8 +27,6 @@ public final class ConfigValidator {
 
     private static final Set<String> SUPPORTED_LANGUAGES =
             Set.of(ConfigData.DEFAULT_LANGUAGE_ZH_CN, ConfigData.DEFAULT_LANGUAGE_EN_US);
-    private static final Set<String> LOCAL_HTTP_HOSTS =
-            Set.of("127.0.0.1", "localhost", "::1", "[::1]");
 
     private ConfigValidator() {
     }
@@ -96,22 +92,10 @@ public final class ConfigValidator {
 
     /**
      * Base URL 白名单：https 任意主机；http 仅限本机（127.0.0.1 / localhost / ::1）。
+     * 规则集中在 ApiUrlPolicy，供连接测试判定"本地免鉴权服务"复用。
      */
     private static boolean isAllowedBaseUrl(String raw) {
-        try {
-            URI uri = URI.create(raw.trim());
-            String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
-            if ("https".equals(scheme)) {
-                return uri.getHost() != null;
-            }
-            if ("http".equals(scheme)) {
-                String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
-                return LOCAL_HTTP_HOSTS.contains(host);
-            }
-            return false;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
+        return ApiUrlPolicy.isAllowedBaseUrl(raw);
     }
 
     private static boolean isBlank(String value) {

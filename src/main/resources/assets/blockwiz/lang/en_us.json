@@ -57,7 +57,7 @@
   "command.placeholder.sprint": "This subcommand arrives in {0}",
   "command.test.start": "Starting connection test...",
   "command.test.running": "Connection test in progress, please wait",
-  "command.test.noApiKey": "No API Key configured: cannot test connectivity to the model API. Configure the API Key in Mod Menu first (local services like Ollama don't need this test)",
+  "command.test.noApiKey": "No API Key configured: external model APIs require an API Key to test connectivity. Configure it in Mod Menu first (local keyless services like Ollama can test without one)",
   "command.test.notConfigured": "AI requests disabled: configure Base URL and model in Mod Menu first",
   "command.test.ok": "Connection OK: HTTP {0}, {1} ms",
   "command.test.fail": "Connection failed: {0} (HTTP {1}, {2} ms)",
