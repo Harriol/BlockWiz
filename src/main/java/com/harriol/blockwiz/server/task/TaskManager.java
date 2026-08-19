@@ -65,6 +65,12 @@ public final class TaskManager {
         if (activeScan != null) {
             boolean done = activeScan.tick();
             if (done) {
+                if (activeScan.isFailed()) {
+                    // 扫描区域含未加载区块：反馈并终止任务，避免任务卡死在「规划中」
+                    Feedback.sendKey(operatorSource(), Keys.COMMAND_SCAN_UNLOADED);
+                    current = null;
+                    resetTaskState();
+                }
                 activeScan = null;
             }
         }
@@ -99,8 +105,8 @@ public final class TaskManager {
             return;
         }
         ServerPlayer player = source.getPlayer();
-        taskConfig = ConfigHolder.get();
         resetTaskState();
+        taskConfig = ConfigHolder.get();
         current = new TaskSnapshot(UUID.randomUUID().toString(), description,
                 TaskState.PLANNING, null, null, null, System.currentTimeMillis());
         String facing = Direction.fromYRot(player.getYRot()).name();
@@ -287,9 +293,24 @@ public final class TaskManager {
         if (task == null || !task.isRangeSkeleton()) {
             return false;
         }
+        if (!ConfigHolder.isValid()) {
+            // 与普通描述路径一致：AI 未配置时拒绝开始，骨架任务保留，配置后可重试
+            Feedback.sendKey(source, Keys.COMMAND_TEST_NOT_CONFIGURED);
+            return true;
+        }
+        ServerPlayer player = source.getPlayer();
+        taskConfig = ConfigHolder.get();
+        activeScan = null;
+        lastScanSummary = null;
+        pendingProposal = null;
+        proposalRequested = false;
+        PROPOSAL_RESULTS.clear();
         current = task.withDescription(description);
+        String facing = Direction.fromYRot(player.getYRot()).name();
+        activeScan = WorldScanner.start(source.getLevel(), task.range(), facing);
+        activeScan.onComplete(TaskManager::onScanComplete);
         Feedback.sendKey(source, Keys.COMMAND_RANGE_TAKEOVER, task.range(), description);
-        Feedback.sendKey(source, Keys.COMMAND_PLANNING_STUB);
+        Feedback.sendKey(source, Keys.COMMAND_SCAN_START_RANGE, task.range());
         return true;
     }
 

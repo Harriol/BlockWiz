@@ -239,8 +239,11 @@ public final class Keys {
     /** 已有活动任务。 */
     public static final String COMMAND_TASK_ACTIVE = "command.taskActive";
 
-    /** 扫描开始。 */
+    /** 扫描开始（半径模式）。 */
     public static final String COMMAND_SCAN_START = "command.scan.start";
+
+    /** 扫描开始（手动范围模式）。 */
+    public static final String COMMAND_SCAN_START_RANGE = "command.scan.start.range";
 
     /** 扫描完成摘要。 */
     public static final String COMMAND_SCAN_DONE = "command.scan.done";

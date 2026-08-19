@@ -80,6 +80,7 @@
   "command.noTask": "No active task",
   "command.taskActive": "A task is already active (state: {0}); use /blockwiz cancel or /blockwiz pause first",
   "command.scan.start": "Scanning environment (radius {0})...",
+  "command.scan.start.range": "Scanning environment (range {0})...",
   "command.scan.done": "Scan done: {0} non-air blocks, bounds {1}",
   "command.scan.unloaded": "Scan area contains unloaded chunks; task stopped: move closer or adjust the range",
   "command.propose.start": "Asking AI for a candidate boundary...",

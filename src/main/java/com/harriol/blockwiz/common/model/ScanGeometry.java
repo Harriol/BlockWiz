@@ -29,6 +29,17 @@ public final class ScanGeometry {
                 center.x() + radius, center.y() + radius, center.z() + radius);
     }
 
+    /** 范围中心（各轴取中点，整数向下取整）。 */
+    public static Pos centerOf(Box bounds) {
+        if (bounds == null) {
+            throw new IllegalArgumentException("bounds 不能为 null");
+        }
+        return new Pos(
+                (bounds.min().x() + bounds.max().x()) / 2,
+                (bounds.min().y() + bounds.max().y()) / 2,
+                (bounds.min().z() + bounds.max().z()) / 2);
+    }
+
     /** 扫描位置总数。 */
     public static long positionCount(Box bounds) {
         return bounds.volume();

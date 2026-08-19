@@ -40,7 +40,22 @@ public final class WorldScanner {
      * @return 扫描会话
      */
     public static ScanSession start(ServerLevel level, BlockPos center, int radius, String facing) {
-        return new ScanSession(level, center, radius, facing);
+        Pos centerPos = new Pos(center.getX(), center.getY(), center.getZ());
+        return new ScanSession(level, ScanGeometry.scanBounds(centerPos, radius), centerPos, radius, facing);
+    }
+
+    /**
+     * 启动一次范围扫描（在服务端主线程创建）：扫描本体为玩家手动指定的范围
+     * （先 /blockwiz range 设定范围，再输入自然语言描述时使用）。
+     *
+     * @param level  服务端世界
+     * @param bounds 手动指定范围
+     * @param facing 玩家朝向（DIRECTION 枚举名）
+     * @return 扫描会话
+     */
+    public static ScanSession start(ServerLevel level, Box bounds, String facing) {
+        return new ScanSession(level, bounds, ScanGeometry.centerOf(bounds),
+                Math.max(bounds.edgeX(), Math.max(bounds.edgeY(), bounds.edgeZ())), facing);
     }
 
     /** 一次扫描会话：持有游标与中间统计，由主线程逐 tick 推进。 */
@@ -69,13 +84,12 @@ public final class WorldScanner {
         private ScanSummary summary;
         private Consumer<ScanSummary> onComplete;
 
-        private ScanSession(ServerLevel level, BlockPos center, int radius, String facing) {
+        private ScanSession(ServerLevel level, Box raw, Pos center, int radius, String facing) {
             this.level = level;
-            this.center = new Pos(center.getX(), center.getY(), center.getZ());
+            this.center = center;
             this.radius = radius;
             this.facing = facing;
             // Y 方向裁剪到世界高度，防止扫描虚空/上限外
-            Box raw = ScanGeometry.scanBounds(this.center, radius);
             int minY = Math.max(raw.min().y(), level.getMinY());
             int maxY = Math.min(raw.max().y(), level.getMaxY() - 1);
             if (maxY < minY) {
