@@ -25,10 +25,16 @@ public enum TaskState {
 
     /**
      * i18n 标签键：state.pendingConfirm / state.planning / ...
+     * 枚举名（PENDING_CONFIRM）需转换为语言文件中的驼峰键（pendingConfirm）。
      *
      * @return 翻译键
      */
     public String labelKey() {
-        return "state." + Character.toLowerCase(name().charAt(0)) + name().substring(1);
+        String[] parts = name().toLowerCase().split("_");
+        StringBuilder key = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length; i++) {
+            key.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
+        }
+        return "state." + key;
     }
 }

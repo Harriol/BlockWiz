@@ -68,6 +68,7 @@
   "test.category.server": "服务端错误",
   "test.category.format": "响应格式错误",
   "command.range.help": "用法：/blockwiz range <sx> <sy> <sz>（以当前位置为中心 + 尺寸）或 /blockwiz range <x1> <y1> <z1> <x2> <y2> <z2>（两个角点）",
+  "command.range.error.format": "范围参数错误：需要 3 个整数（中心+尺寸）或 6 个整数（两个角点）",
   "command.range.set": "范围已记录：{0}",
   "command.range.invalid": "范围不合法：{0}",
   "command.range.limit": "限制：任一边长 ≤64 且体积 ≤262144",

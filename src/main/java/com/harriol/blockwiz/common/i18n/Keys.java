@@ -206,6 +206,9 @@ public final class Keys {
     /** range 命令用法。 */
     public static final String COMMAND_RANGE_HELP = "command.range.help";
 
+    /** range 参数格式错误。 */
+    public static final String COMMAND_RANGE_ERROR_FORMAT = "command.range.error.format";
+
     /** 手动范围已记录。 */
     public static final String COMMAND_RANGE_SET = "command.range.set";
 

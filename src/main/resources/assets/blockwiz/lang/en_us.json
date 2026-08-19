@@ -68,6 +68,7 @@
   "test.category.server": "Server error",
   "test.category.format": "Malformed response",
   "command.range.help": "Usage: /blockwiz range <sx> <sy> <sz> (center + size) or /blockwiz range <x1> <y1> <z1> <x2> <y2> <z2> (two corners)",
+  "command.range.error.format": "Invalid range arguments: expected 3 integers (center + size) or 6 integers (two corners)",
   "command.range.set": "Range recorded: {0}",
   "command.range.invalid": "Invalid range: {0}",
   "command.range.limit": "Limit: every edge ≤64 and volume ≤262144",

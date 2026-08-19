@@ -7,7 +7,6 @@ import com.harriol.blockwiz.common.i18n.Keys;
 import com.harriol.blockwiz.server.ai.AiClient;
 import com.harriol.blockwiz.server.ai.ConnectionTestResult;
 import com.harriol.blockwiz.server.task.TaskManager;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -67,32 +66,15 @@ public final class BlockWizCommand {
                             Feedback.sendKey(ctx.getSource(), Keys.COMMAND_RANGE_HELP);
                             return 1;
                         })
-                        .then(Commands.argument("sx", IntegerArgumentType.integer())
-                                .then(Commands.argument("sy", IntegerArgumentType.integer())
-                                        .then(Commands.argument("sz", IntegerArgumentType.integer())
-                                                .executes(ctx -> {
-                                                    TaskManager.handleManualRange(ctx.getSource(),
-                                                            IntegerArgumentType.getInteger(ctx, "sx"),
-                                                            IntegerArgumentType.getInteger(ctx, "sy"),
-                                                            IntegerArgumentType.getInteger(ctx, "sz"));
-                                                    return 1;
-                                                })))))
-                        .then(Commands.argument("x1", IntegerArgumentType.integer())
-                                .then(Commands.argument("y1", IntegerArgumentType.integer())
-                                        .then(Commands.argument("z1", IntegerArgumentType.integer())
-                                                .then(Commands.argument("x2", IntegerArgumentType.integer())
-                                                        .then(Commands.argument("y2", IntegerArgumentType.integer())
-                                                                .then(Commands.argument("z2", IntegerArgumentType.integer())
-                                                                        .executes(ctx -> {
-                                                                            TaskManager.handleManualRangeCorners(ctx.getSource(),
-                                                                                    IntegerArgumentType.getInteger(ctx, "x1"),
-                                                                                    IntegerArgumentType.getInteger(ctx, "y1"),
-                                                                                    IntegerArgumentType.getInteger(ctx, "z1"),
-                                                                                    IntegerArgumentType.getInteger(ctx, "x2"),
-                                                                                    IntegerArgumentType.getInteger(ctx, "y2"),
-                                                                                    IntegerArgumentType.getInteger(ctx, "z2"));
-                                                                            return 1;
-                                                                        })))))))
+                        /* 两种形式（3 参数=中心+尺寸 / 6 参数=角点）统一收进 greedy string，
+                           由 RangeInput 在处理器中解析——Brigadier 同一位置的两个同类型
+                           整数参数分支会导致 6 参数形式解析失败（"错误的命令参数"）。 */
+                        .then(Commands.argument("coords", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    TaskManager.handleManualRangeText(ctx.getSource(),
+                                            StringArgumentType.getString(ctx, "coords"));
+                                    return 1;
+                                })))
                 .then(Commands.argument("description", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             TaskManager.handleDescription(ctx.getSource(),

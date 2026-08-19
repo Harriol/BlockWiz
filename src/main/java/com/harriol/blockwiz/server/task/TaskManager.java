@@ -16,6 +16,7 @@ import com.harriol.blockwiz.server.ai.BoundaryProposalResult;
 import com.harriol.blockwiz.server.ai.BoundaryService;
 import com.harriol.blockwiz.server.ai.HeuristicBoundaryProposer;
 import com.harriol.blockwiz.server.command.Feedback;
+import com.harriol.blockwiz.server.command.RangeInput;
 import com.harriol.blockwiz.server.scan.WorldScanner;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.CommandSourceStack;
@@ -104,6 +105,29 @@ public final class TaskManager {
         activeScan = WorldScanner.start(source.getLevel(), player.blockPosition(), radius, facing);
         activeScan.onComplete(TaskManager::onScanComplete);
         Feedback.sendKey(source, Keys.COMMAND_SCAN_START, radius);
+    }
+
+    /**
+     * 手动范围文本入口（/blockwiz range <sx sy sz> 或 <x1 y1 z1 x2 y2 z2>）。
+     * 文本解析失败时给出可读提示，不建立任务。
+     */
+    public static void handleManualRangeText(CommandSourceStack source, String text) {
+        if (!guardHost(source)) {
+            return;
+        }
+        RangeInput.RangeParseResult parsed = RangeInput.parse(text);
+        if (!parsed.isOk()) {
+            Feedback.sendKey(source, parsed.errorKey());
+            Feedback.sendKey(source, Keys.COMMAND_RANGE_HELP);
+            return;
+        }
+        if (parsed.isCenterAndSize()) {
+            handleManualRange(source, parsed.values().get(0), parsed.values().get(1), parsed.values().get(2));
+        } else {
+            handleManualRangeCorners(source,
+                    parsed.values().get(0), parsed.values().get(1), parsed.values().get(2),
+                    parsed.values().get(3), parsed.values().get(4), parsed.values().get(5));
+        }
     }
 
     /** 手动范围：中心 + X/Y/Z 尺寸（/blockwiz range sx sy sz）。 */

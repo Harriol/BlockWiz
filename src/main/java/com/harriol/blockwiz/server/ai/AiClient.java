@@ -107,14 +107,23 @@ public final class AiClient {
         return testConnectionAsync(config).get(config.getRequestTimeoutMs() + RESULT_WAIT_MARGIN_MS, TimeUnit.MILLISECONDS);
     }
 
-    /** 拼接 endpoint：处理 Base URL 尾部斜杠。 */
+    /**
+     * 拼接 endpoint：处理 Base URL 尾部斜杠，并把 Base URL 中的查询串（如 ?status=401）
+     * 挪到 chatCompletionsPath 之后，避免拼成 "?status=401/chat/completions"。
+     */
     static String buildEndpoint(String baseUrl, String path) {
         String base = baseUrl == null ? "" : baseUrl.trim();
         String suffix = path == null ? "" : path.trim();
-        if (base.endsWith("/") && suffix.startsWith("/")) {
-            return base + suffix.substring(1);
+        String query = "";
+        int queryIndex = base.indexOf('?');
+        if (queryIndex >= 0) {
+            query = base.substring(queryIndex);
+            base = base.substring(0, queryIndex);
         }
-        return base + suffix;
+        if (base.endsWith("/") && suffix.startsWith("/")) {
+            suffix = suffix.substring(1);
+        }
+        return base + suffix + query;
     }
 
     private HttpRequest buildRequest(ConfigData config, String body) {
